@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { prisma } from '@/lib/prisma';
+import { createClient } from '@supabase/supabase-js';
 import { writeEvent } from '@/lib/analytics';
 import { logger, generateRequestId } from '@/lib/logger';
 
+// Force dynamic rendering - required for API routes on Netlify
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 const landedEventSchema = z.object({
   providerId: z.string().min(1),
@@ -27,12 +33,13 @@ export async function POST(request: Request) {
     const body = await request.json();
     const validated = landedEventSchema.parse(body);
 
-    const provider = await prisma.provider.findUnique({
-      where: { id: validated.providerId },
-      select: { id: true },
-    });
+    const { data: provider, error } = await supabase
+      .from('providers')
+      .select('id')
+      .eq('id', validated.providerId)
+      .maybeSingle();
 
-    if (!provider) {
+    if (error || !provider) {
       logger.warn('Invalid provider ID', { requestId, providerId: validated.providerId });
       return NextResponse.json({ error: 'Provider not found' }, { status: 404 });
     }

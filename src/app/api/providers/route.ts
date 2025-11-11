@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { logger, generateRequestId } from '@/lib/logger';
 
+// Force dynamic rendering - required for API routes on Netlify
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
@@ -32,6 +33,7 @@ export async function GET() {
       modalities: p.modalities || [],
       acceptingNew: p.accepting_new,
       portalLink: p.portal_link,
+      show: p.show,
     })) || [];
 
     logger.info('Providers fetched', { requestId, count: formattedProviders.length });

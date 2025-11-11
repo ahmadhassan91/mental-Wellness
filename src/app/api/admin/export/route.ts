@@ -5,6 +5,7 @@ import { convertToCSV } from '@/lib/utils';
 import { logger, generateRequestId } from '@/lib/logger';
 import { format } from 'date-fns';
 
+// Force dynamic rendering - required for API routes on Netlify
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 

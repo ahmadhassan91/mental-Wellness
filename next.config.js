@@ -17,7 +17,6 @@ const nextConfig = {
     }
     return config;
   },
-  // Ensure API routes are not statically analyzed during build
   outputFileTracing: true,
 };
 

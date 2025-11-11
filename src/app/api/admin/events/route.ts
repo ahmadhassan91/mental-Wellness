@@ -1,11 +1,17 @@
 import { NextResponse } from 'next/server';
 import { basicAuthGuard, createUnauthorizedResponse } from '@/lib/auth';
 import { getEvents } from '@/lib/analytics';
-import { prisma } from '@/lib/prisma';
+import { createClient } from '@supabase/supabase-js';
 import { logger, generateRequestId } from '@/lib/logger';
 
+// Force dynamic rendering - required for API routes on Netlify
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export async function GET(request: Request) {
   const requestId = generateRequestId();
@@ -32,24 +38,22 @@ export async function GET(request: Request) {
     if (startDate) filters.startDate = new Date(startDate);
     if (endDate) filters.endDate = new Date(endDate);
 
-    const [events, providers] = await Promise.all([
-      getEvents(filters),
-      prisma.provider.findMany({
-        select: {
-          id: true,
-          name: true,
-        },
-        orderBy: {
-          name: 'asc',
-        },
-      }),
-    ]);
+    const { data: providers, error: providersError } = await supabase
+      .from('providers')
+      .select('id, name')
+      .order('name', { ascending: true });
+
+    if (providersError) {
+      throw providersError;
+    }
+
+    const events = await getEvents(filters);
 
     logger.info('Admin events fetched', { requestId, count: events.length });
 
     return NextResponse.json({
       events,
-      providers,
+      providers: providers || [],
     });
   } catch (error) {
     logger.error('Failed to fetch admin events', {
