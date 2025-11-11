@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Provider {
+  id           String         @id @default(cuid())
+  name         String
+  photoUrl     String?
+  specialties  String[]
+  modalities   String[]
+  portalLink   String
+  acceptingNew Boolean        @default(true)
+  show         Boolean        @default(true)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  Events       BookingEvent[]
+
+  @@map("providers")
+}
+
+model BookingEvent {
+  id         String   @id @default(cuid())
+  providerId String
+  eventType  String
+  utm        Json?
+  createdAt  DateTime @default(now())
+  provider   Provider @relation(fields: [providerId], references: [id])
+
+  @@index([providerId])
+  @@index([eventType])
+  @@index([createdAt])
+  @@map("booking_events")
+}
