@@ -4,6 +4,9 @@ import { getEvents } from '@/lib/analytics';
 import { prisma } from '@/lib/prisma';
 import { logger, generateRequestId } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function GET(request: Request) {
   const requestId = generateRequestId();
   const authHeader = request.headers.get('authorization');

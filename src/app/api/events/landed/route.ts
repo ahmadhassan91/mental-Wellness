@@ -4,6 +4,9 @@ import { prisma } from '@/lib/prisma';
 import { writeEvent } from '@/lib/analytics';
 import { logger, generateRequestId } from '@/lib/logger';
 
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 const landedEventSchema = z.object({
   providerId: z.string().min(1),
   utm: z
