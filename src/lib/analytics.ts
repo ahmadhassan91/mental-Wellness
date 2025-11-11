@@ -2,10 +2,20 @@ import { createClient } from '@supabase/supabase-js';
 import { UTMParams } from './utils';
 import { logger } from './logger';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
+// Only create Supabase client if environment variables are available
+const createSupabaseClient = () => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  
+  if (!url || !key) {
+    console.warn('Supabase credentials not set, client will not be initialized');
+    return null;
+  }
+  
+  return createClient(url, key);
+};
+
+const supabase = createSupabaseClient();
 
 export type EventType = 'click' | 'landed_portal';
 
@@ -17,6 +27,11 @@ export interface WriteEventInput {
 }
 
 export async function writeEvent(input: WriteEventInput): Promise<void> {
+  if (!supabase) {
+    logger.error('Supabase client not initialized', { requestId: input.requestId });
+    throw new Error('Database client not available');
+  }
+  
   try {
     const { error } = await supabase
       .from('booking_events')
@@ -51,6 +66,10 @@ export interface GetEventsFilters {
 }
 
 export async function getEvents(filters?: GetEventsFilters) {
+  if (!supabase) {
+    throw new Error('Database client not available');
+  }
+  
   let query = supabase
     .from('booking_events')
     .select(`

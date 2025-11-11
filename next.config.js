@@ -9,6 +9,7 @@ const nextConfig = {
   swcMinify: false,
   experimental: {
     webpackBuildWorker: false,
+    serverComponentsExternalPackages: ['@prisma/client', 'prisma'],
   },
   webpack: (config, { dev, isServer }) => {
     if (dev) {
@@ -16,6 +17,8 @@ const nextConfig = {
     }
     return config;
   },
+  // Ensure API routes are not statically analyzed during build
+  outputFileTracing: true,
 };
 
 module.exports = nextConfig;
