@@ -10,8 +10,6 @@ import {
   Group,
   Paper,
   Text,
-  PasswordInput,
-  TextInput,
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { notifications } from '@mantine/notifications';
@@ -35,66 +33,31 @@ interface BookingEvent {
 }
 
 export default function AdminPage() {
-  const [authenticated, setAuthenticated] = useState(false);
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
   const [providers, setProviders] = useState<Provider[]>([]);
   const [events, setEvents] = useState<BookingEvent[]>([]);
   const [selectedProvider, setSelectedProvider] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async () => {
-    setLoading(true);
-    try {
-      const credentials = btoa(`${username}:${password}`);
-      const res = await fetch('/api/admin/events', {
-        headers: {
-          Authorization: `Basic ${credentials}`,
-        },
-      });
-
-      if (res.ok) {
-        setAuthenticated(true);
-        localStorage.setItem('adminCredentials', credentials);
-        const data = await res.json();
-        setEvents(data.events);
-        setProviders(data.providers);
-      } else {
-        notifications.show({
-          title: 'Authentication Failed',
-          message: 'Invalid username or password',
-          color: 'red',
-        });
-      }
-    } catch (error) {
-      notifications.show({
-        title: 'Error',
-        message: 'Failed to authenticate',
-        color: 'red',
-      });
-    }
-    setLoading(false);
-  };
+  // Load initial data on mount
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   const fetchEvents = async () => {
     setLoading(true);
     try {
-      const credentials = btoa(`${username}:${password}`);
       const params = new URLSearchParams();
       if (selectedProvider) params.set('providerId', selectedProvider);
       if (dateRange[0]) params.set('startDate', dateRange[0].toISOString());
       if (dateRange[1]) params.set('endDate', dateRange[1].toISOString());
 
-      const res = await fetch(`/api/admin/events?${params}`, {
-        headers: {
-          Authorization: `Basic ${credentials}`,
-        },
-      });
+      const res = await fetch(`/api/admin/events?${params}`);
 
       if (res.ok) {
         const data = await res.json();
         setEvents(data.events);
+        setProviders(data.providers);
       }
     } catch (error) {
       notifications.show({
@@ -108,17 +71,12 @@ export default function AdminPage() {
 
   const handleExport = async () => {
     try {
-      const credentials = btoa(`${username}:${password}`);
       const params = new URLSearchParams();
       if (selectedProvider) params.set('providerId', selectedProvider);
       if (dateRange[0]) params.set('startDate', dateRange[0].toISOString());
       if (dateRange[1]) params.set('endDate', dateRange[1].toISOString());
 
-      const res = await fetch(`/api/admin/export?${params}`, {
-        headers: {
-          Authorization: `Basic ${credentials}`,
-        },
-      });
+      const res = await fetch(`/api/admin/export?${params}`);
 
       if (res.ok) {
         const blob = await res.blob();
@@ -139,40 +97,6 @@ export default function AdminPage() {
       });
     }
   };
-
-  if (!authenticated) {
-    return (
-      <Container size="xs" py={80}>
-        <Paper p="xl" radius="md" withBorder>
-          <Stack gap="md">
-            <Title order={2} size={28} ta="center" c="slate.9">
-              Admin Login
-            </Title>
-            <TextInput
-              label="Username"
-              placeholder="Enter username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              size="md"
-            />
-            <PasswordInput
-              label="Password"
-              placeholder="Enter password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              size="md"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') handleLogin();
-              }}
-            />
-            <Button onClick={handleLogin} loading={loading} size="md" fullWidth>
-              Login
-            </Button>
-          </Stack>
-        </Paper>
-      </Container>
-    );
-  }
 
   return (
     <Container size="xl" py={64}>

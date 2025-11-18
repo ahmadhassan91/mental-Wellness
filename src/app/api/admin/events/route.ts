@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
-import { basicAuthGuard, createUnauthorizedResponse } from '@/lib/auth';
 import { getEvents } from '@/lib/analytics';
 import { createClient } from '@supabase/supabase-js';
 import { logger, generateRequestId } from '@/lib/logger';
+
+// Force dynamic rendering - required for API routes on Netlify
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,12 +14,6 @@ const supabase = createClient(
 
 export async function GET(request: Request) {
   const requestId = generateRequestId();
-  const authHeader = request.headers.get('authorization');
-
-  if (!basicAuthGuard(authHeader)) {
-    logger.warn('Unauthorized admin access attempt', { requestId });
-    return createUnauthorizedResponse();
-  }
 
   try {
     const url = new URL(request.url);

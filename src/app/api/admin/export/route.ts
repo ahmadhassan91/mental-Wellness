@@ -1,18 +1,15 @@
 import { NextResponse } from 'next/server';
-import { basicAuthGuard, createUnauthorizedResponse } from '@/lib/auth';
 import { getEvents } from '@/lib/analytics';
 import { convertToCSV } from '@/lib/utils';
 import { logger, generateRequestId } from '@/lib/logger';
 import { format } from 'date-fns';
 
+// Force dynamic rendering - required for API routes on Netlify
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function GET(request: Request) {
   const requestId = generateRequestId();
-  const authHeader = request.headers.get('authorization');
-
-  if (!basicAuthGuard(authHeader)) {
-    logger.warn('Unauthorized admin export attempt', { requestId });
-    return createUnauthorizedResponse();
-  }
 
   try {
     const url = new URL(request.url);

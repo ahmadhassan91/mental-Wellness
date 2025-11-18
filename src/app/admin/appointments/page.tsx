@@ -51,30 +51,17 @@ export default function AdminAppointmentsPage() {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
 
   useEffect(() => {
-    const credentials = localStorage.getItem('adminCredentials');
-    if (!credentials) {
-      router.push('/admin');
-      return;
-    }
-
     fetchAppointments();
-  }, [router, statusFilter, dateFilter]);
+  }, [statusFilter, dateFilter]);
 
   const fetchAppointments = async () => {
     setLoading(true);
     try {
-      const credentials = localStorage.getItem('adminCredentials');
-      if (!credentials) return;
-
       let url = '/api/appointments?';
       if (statusFilter) url += `status=${statusFilter}&`;
       if (dateFilter) url += `date=${dateFilter.toISOString().split('T')[0]}&`;
 
-      const response = await fetch(url.slice(0, -1), {
-        headers: {
-          Authorization: `Basic ${credentials}`,
-        },
-      });
+      const response = await fetch(url.slice(0, -1));
 
       if (!response.ok) throw new Error('Failed to fetch appointments');
 
@@ -94,14 +81,10 @@ export default function AdminAppointmentsPage() {
   const handleSyncToTherapyNotes = async (appointmentId?: string) => {
     setSyncing(true);
     try {
-      const credentials = localStorage.getItem('adminCredentials');
-      if (!credentials) return;
-
       const response = await fetch('/api/appointments/sync-therapynotes', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Basic ${credentials}`,
         },
         body: JSON.stringify(appointmentId ? { appointmentId } : {}),
       });
@@ -132,14 +115,10 @@ export default function AdminAppointmentsPage() {
 
   const updateAppointmentStatus = async (appointmentId: string, newStatus: string) => {
     try {
-      const credentials = localStorage.getItem('adminCredentials');
-      if (!credentials) return;
-
       const response = await fetch(`/api/appointments/${appointmentId}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Basic ${credentials}`,
         },
         body: JSON.stringify({ status: newStatus }),
       });
