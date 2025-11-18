@@ -17,9 +17,10 @@ export interface Provider {
 interface ProviderCardProps {
   provider: Provider;
   onRequestClick: (providerId: string) => void;
+  onBookAppointment?: (providerId: string) => void;
 }
 
-export function ProviderCard({ provider, onRequestClick }: ProviderCardProps) {
+export function ProviderCard({ provider, onRequestClick, onBookAppointment }: ProviderCardProps) {
   return (
     <Card shadow="sm" padding="lg" radius="md" withBorder>
       <Card.Section>
@@ -71,14 +72,26 @@ export function ProviderCard({ provider, onRequestClick }: ProviderCardProps) {
           {provider.acceptingNew ? 'Accepting new patients' : 'Not accepting new patients'}
         </Text>
 
-        <Button
-          fullWidth
-          disabled={!provider.acceptingNew}
-          onClick={() => onRequestClick(provider.id)}
-          style={{ minHeight: 44 }}
-        >
-          Request on Portal
-        </Button>
+        <Group grow>
+          {onBookAppointment && (
+            <Button
+              variant="filled"
+              disabled={!provider.acceptingNew}
+              onClick={() => onBookAppointment(provider.id)}
+              style={{ minHeight: 44 }}
+            >
+              Book Appointment
+            </Button>
+          )}
+          <Button
+            variant={onBookAppointment ? 'outline' : 'filled'}
+            disabled={!provider.acceptingNew}
+            onClick={() => onRequestClick(provider.id)}
+            style={{ minHeight: 44 }}
+          >
+            {onBookAppointment ? 'Portal Request' : 'Request on Portal'}
+          </Button>
+        </Group>
       </Stack>
     </Card>
   );

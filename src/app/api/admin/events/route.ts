@@ -4,10 +4,6 @@ import { getEvents } from '@/lib/analytics';
 import { createClient } from '@supabase/supabase-js';
 import { logger, generateRequestId } from '@/lib/logger';
 
-// Force dynamic rendering - required for API routes on Netlify
-export const dynamic = 'force-dynamic';
-export const runtime = 'nodejs';
-
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!

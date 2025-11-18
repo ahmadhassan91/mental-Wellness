@@ -56,6 +56,7 @@ export default function AdminPage() {
 
       if (res.ok) {
         setAuthenticated(true);
+        localStorage.setItem('adminCredentials', credentials);
         const data = await res.json();
         setEvents(data.events);
         setProviders(data.providers);
@@ -180,9 +181,18 @@ export default function AdminPage() {
           <Title order={1} size={36} fw={700} c="slate.9">
             Analytics Dashboard
           </Title>
-          <Button onClick={handleExport} variant="outline">
-            Export CSV
-          </Button>
+          <Group>
+            <Button
+              component="a"
+              href="/admin/appointments"
+              variant="filled"
+            >
+              Manage Appointments
+            </Button>
+            <Button onClick={handleExport} variant="outline">
+              Export CSV
+            </Button>
+          </Group>
         </Group>
 
         <Paper p="lg" radius="md" withBorder>

@@ -5,6 +5,7 @@ import { Container, Title, Text, Stack, SimpleGrid, Paper } from '@mantine/core'
 import { notifications } from '@mantine/notifications';
 import { ProviderCard, Provider } from '@/components/ProviderCard';
 import { ProviderFilters } from '@/components/ProviderFilters';
+import { AppointmentBooking } from '@/components/AppointmentBooking';
 import { parseUTMParams } from '@/lib/utils';
 
 export default function ProvidersPage() {
@@ -13,6 +14,8 @@ export default function ProvidersPage() {
   const [selectedSpecialties, setSelectedSpecialties] = useState<string[]>([]);
   const [modality, setModality] = useState('all');
   const [utm, setUtm] = useState<Record<string, string>>({});
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [selectedProvider, setSelectedProvider] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     const searchParams = new URLSearchParams(window.location.search);
@@ -79,6 +82,14 @@ export default function ProvidersPage() {
     }
   };
 
+  const handleBookAppointment = (providerId: string) => {
+    const provider = providers.find((p) => p.id === providerId);
+    if (!provider) return;
+
+    setSelectedProvider({ id: provider.id, name: provider.name });
+    setBookingModalOpen(true);
+  };
+
   if (loading) {
     return (
       <Container size="lg" py={64}>
@@ -130,11 +141,25 @@ export default function ProvidersPage() {
                 key={provider.id}
                 provider={provider}
                 onRequestClick={handleRequestClick}
+                onBookAppointment={handleBookAppointment}
               />
             ))}
           </SimpleGrid>
         )}
       </Stack>
+
+      {selectedProvider && (
+        <AppointmentBooking
+          opened={bookingModalOpen}
+          onClose={() => {
+            setBookingModalOpen(false);
+            setSelectedProvider(null);
+          }}
+          providerId={selectedProvider.id}
+          providerName={selectedProvider.name}
+          utm={utm}
+        />
+      )}
     </Container>
   );
 }
