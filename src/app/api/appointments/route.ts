@@ -30,6 +30,13 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
+    
+    // Log incoming request for debugging
+    logger.info('Appointment creation request', {
+      requestId,
+      payload: body,
+    });
+    
     const validated = createAppointmentSchema.parse(body);
 
     const { data: provider, error: providerError } = await supabase
@@ -104,13 +111,27 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      logger.warn('Invalid appointment data', { requestId, errors: error.errors });
-      return NextResponse.json({ error: 'Invalid appointment data' }, { status: 400 });
+      logger.warn('Invalid appointment data', { 
+        requestId, 
+        errors: error.errors,
+        formattedErrors: error.format()
+      });
+      
+      // Return detailed validation errors
+      return NextResponse.json({ 
+        error: 'Invalid appointment data',
+        details: error.errors.map(err => ({
+          field: err.path.join('.'),
+          message: err.message,
+          code: err.code
+        }))
+      }, { status: 400 });
     }
 
     logger.error('Failed to create appointment', {
       requestId,
       error: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
     });
 
     return NextResponse.json({ error: 'Failed to create appointment' }, { status: 500 });

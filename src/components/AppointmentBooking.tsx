@@ -82,6 +82,7 @@ export function AppointmentBooking({
   };
 
   const handleSubmit = async () => {
+    // Validate date and time
     if (!selectedDate || !selectedTime) {
       notifications.show({
         title: 'Missing Information',
@@ -91,26 +92,68 @@ export function AppointmentBooking({
       return;
     }
 
+    // Validate required fields
+    if (!formData.patientName.trim()) {
+      notifications.show({
+        title: 'Missing Information',
+        message: 'Please enter your full name',
+        color: 'yellow',
+      });
+      return;
+    }
+
+    if (!formData.patientEmail.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.patientEmail)) {
+      notifications.show({
+        title: 'Invalid Email',
+        message: 'Please enter a valid email address',
+        color: 'yellow',
+      });
+      return;
+    }
+
+    if (!formData.patientPhone || formData.patientPhone.length < 10) {
+      notifications.show({
+        title: 'Invalid Phone',
+        message: 'Please enter a valid phone number (at least 10 digits)',
+        color: 'yellow',
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
+      const payload = {
+        providerId,
+        appointmentDate: selectedDate.toISOString().split('T')[0],
+        startTime: selectedTime,
+        ...formData,
+        utm,
+      };
+
+      // Log payload for debugging (remove in production)
+      console.log('📤 Sending appointment request:', payload);
+
       const response = await fetch('/api/appointments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          providerId,
-          appointmentDate: selectedDate.toISOString().split('T')[0],
-          startTime: selectedTime,
-          ...formData,
-          utm,
-        }),
+        body: JSON.stringify(payload),
       });
 
+      const result = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to book appointment');
+        console.error('❌ Appointment booking failed:', result);
+        
+        // Show detailed error if available
+        const errorMessage = result.details 
+          ? result.details.map((d: any) => `${d.field}: ${d.message}`).join(', ')
+          : result.error || 'Failed to book appointment';
+        
+        throw new Error(errorMessage);
       }
 
-      const result = await response.json();
+      console.log('✅ Appointment booked successfully:', result);
 
       notifications.show({
         title: 'Appointment Booked!',
@@ -125,7 +168,7 @@ export function AppointmentBooking({
     } catch (error) {
       notifications.show({
         title: 'Booking Failed',
-        message: 'Unable to book appointment. Please try again.',
+        message: error instanceof Error ? error.message : 'Unable to book appointment. Please try again.',
         color: 'red',
         icon: <IconAlertCircle />,
       });
@@ -222,11 +265,16 @@ export function AppointmentBooking({
 
             <TextInput
               label="Phone"
-              placeholder="(555) 123-4567"
+              placeholder="5551234567"
               type="tel"
               required
               value={formData.patientPhone}
-              onChange={(e) => setFormData({ ...formData, patientPhone: e.target.value })}
+              onChange={(e) => {
+                // Remove non-numeric characters for validation
+                const cleaned = e.target.value.replace(/\D/g, '');
+                setFormData({ ...formData, patientPhone: cleaned });
+              }}
+              description="Enter 10 digits (numbers only)"
             />
 
             <Select
